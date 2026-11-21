@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#7b1832">
+<title>Dilimizin Hazinesi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--wine:#7b1832;--red:#a52a45;--cream:#fff8e9;--gold:#d7a94b;--teal:#167b78;--ink:#382a28}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:system-ui,Segoe UI,sans-serif}
+header{background:linear-gradient(135deg,var(--wine),#a83b50);color:#fff;padding:24px 18px;text-align:center;border-bottom:5px solid var(--gold)}
+header h1{margin:0;font-size:clamp(25px,5vw,38px)}header p{margin:8px 0 0}
+main{max-width:900px;margin:auto;padding:18px}
+nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 20px}
+button,.btn{border:0;border-radius:13px;padding:13px 16px;background:var(--teal);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
+nav button{background:#fff;color:var(--wine);border:2px solid #ead8b5}
+nav button.active{background:var(--wine);color:#fff;border-color:var(--wine)}
+.card{background:#fff;border:1px solid #ead8b5;border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 4px 14px #4b2a1710}
+h2{color:var(--wine);margin-top:0}input{width:100%;padding:13px;border:1px solid #cbbba5;border-radius:10px;font-size:16px;margin:8px 0}
+.wordgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.wordgrid button{background:#f7ecd6;color:var(--ink);border:1px solid #e3c98e}
+.wordgrid button.selected{background:var(--gold);color:#2e2118}
+.small{font-size:13px;color:#6e6259}.score{font-weight:800;color:var(--teal)}
+.hidden{display:none}.pill{display:inline-block;background:#f5e5c8;padding:5px 10px;border-radius:99px;font-size:13px}
+a{color:var(--teal);font-weight:700;overflow-wrap:anywhere}
+footer{text-align:center;padding:25px;color:#796d61;font-size:13px}
+@media(min-width:650px){nav{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>✦ Dilimizin Hazinesi ✦</h1><p>Kelime oyunlarıyla dilimizin güzelliklerini keşfet!</p></header>
+<main>
+<div class="card"><span class="pill">Türkçemizin zenginliği</span> <span class="score">Puan: <span id="score">0</span></span><p>Atasözleri, kelimeler ve anlamlar dünyasına hoş geldin.</p></div>
+<nav>
+<button class="active" data-tab="home">Ana Sayfa</button><button data-tab="games">Kelime Oyunları</button><button data-tab="quiz">Mini Test</button><button data-tab="dict">Sözlük</button>
+</nav>
+<section id="home" class="panel card"><h2>Hoş geldin!</h2><p>Bu uygulamada eş anlamlı ve zıt anlamlı kelimeleri eşleştirebilir, mini test çözebilir ve örnek sözlükte kelimeleri arayabilirsin.</p><button onclick="show('games')">Oyuna başla</button></section>
+<section id="games" class="panel card hidden"><h2>Kelime eşleştirme</h2><p>Oyun türünü seç, sonra bir kelimeye ve onun anlamdaşına dokun.</p><div class="wordgrid"><button onclick="startGame('syn')">Eş anlamlı kelimeler</button><button onclick="startGame('ant')">Zıt anlamlı kelimeler</button></div><p id="gamehint" class="small">Bir oyun seçerek başlayabilirsin.</p><div id="gameboard" class="wordgrid"></div></section>
+<section id="quiz" class="panel card hidden"><h2>Mini Türkçe testi</h2><div id="quizarea"></div></section>
+<section id="dict" class="panel card hidden"><h2>Kelime hazinesi</h2><p>Örnek kelimelerde arama yapabilir, ayrıca TDK Güncel Türkçe Sözlük'te aratabilirsin.</p><input id="search" placeholder="Bir kelime yaz..." oninput="searchWord()"><div id="definition"></div></section>
+</main>
+<footer>Sevgiyle hazırlandı • Dilimizin Hazinesi</footer>
+<script>
+const $=s=>document.querySelector(s);let points=Number(localStorage.getItem('dh_points')||0);function score(){ $('#score').textContent=points }score();
+function show(id){document.querySelectorAll('.panel').forEach(x=>x.classList.add('hidden'));$('#'+id).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+const syn=[['yanıt','cevap'],['konuk','misafir'],['yürek','kalp'],['sözcük','kelime'],['öğretmen','muallim']];
+const ant=[['uzun','kısa'],['hızlı','yavaş'],['cömert','cimri'],['aydınlık','karanlık'],['eski','yeni']];
+let first=null,locked=false;
+function startGame(type){first=null;locked=false;let pairs=(type==='syn'?syn:ant);$('#gamehint').textContent=type==='syn'?'Eş anlamlıları bul!':'Zıt anlamlıları bul!';let words=pairs.flat().sort(()=>Math.random()-.5);$('#gameboard').innerHTML='';words.forEach(w=>{let b=document.createElement('button');b.textContent=w;b.onclick=()=>pick(b,pairs);$('#gameboard').appendChild(b)})}
+function pick(btn,pairs){if(locked||btn.disabled)return;if(!first){first=btn;btn.classList.add('selected');return}if(first===btn)return;let ok=pairs.some(p=>p.includes(first.textContent)&&p.includes(btn.textContent));if(ok){first.disabled=btn.disabled=true;first.classList.remove('selected');points+=10;localStorage.setItem('dh_points',points);score();$('#gamehint').textContent='Harika! +10 puan';}else{$('#gamehint').textContent='Tekrar dene!';first.classList.remove('selected')}first=null}
+const questions=[{q:'“Yanıt” kelimesinin eş anlamlısı hangisidir?',a:['Soru','Cevap','Sorun'],c:1},{q:'“Cömert” kelimesinin zıt anlamlısı hangisidir?',a:['Cimri','Nazik','Paylaşımcı'],c:0},{q:'“Konuk” kelimesinin eş anlamlısı hangisidir?',a:['Ev sahibi','Misafir','Komşu'],c:1},{q:'“Karanlık” kelimesinin zıt anlamlısı hangisidir?',a:['Gece','Loş','Aydınlık'],c:2},{q:'“Yürek” kelimesinin eş anlamlısı hangisidir?',a:['Kalp','Akıl','El'],c:0}];let qi=0,correct=0;
+function renderQuiz(){if(qi>=questions.length){$('#quizarea').innerHTML=`<h3>Test tamamlandı!</h3><p>${questions.length} soruda ${correct} doğru yaptın.</p><button onclick="qi=0;correct=0;renderQuiz()">Yeniden çöz</button>`;return}let q=questions[qi];$('#quizarea').innerHTML=`<p><b>${qi+1}/${questions.length}.</b> ${q.q}</p>`+q.a.map((a,i)=>`<button style="display:block;width:100%;margin:8px 0;background:#f7ecd6;color:#382a28" onclick="answer(${i})">${a}</button>`).join('')}
+function answer(i){if(i===questions[qi].c){correct++;points+=10;localStorage.setItem('dh_points',points);score()}qi++;renderQuiz()}renderQuiz();
+const words={'abide':'Kalıcı, sürekli olan.','azim':'Bir işi başarmak için gösterilen kararlılık.','bereket':'Bolluk, verimlilik.','çaba':'Bir işi yapmak için harcanan güç.','erdem':'Ahlaki bakımdan iyi ve değerli olma.','feyiz':'Manevi verimlilik, bolluk.','irfan':'Bilme, anlama ve kültür.','kanaat':'Eldekine razı olma.','kıymet':'Değer, paha.','nezaket':'Başkalarına karşı saygılı ve incelikli davranma.','özlem':'Birini veya bir şeyi görme isteği.','vefa':'İyilikleri unutmama, bağlılık.'};
+function searchWord(){let w=$('#search').value.trim().toLocaleLowerCase('tr');if(!w){$('#definition').innerHTML='';return}let def=words[w];$('#definition').innerHTML=def?`<div class="card"><b>${w}</b><p>${def}</p><p class="small">Örnek sözlük açıklaması</p></div>`:`<p>Bu kelime örnek sözlükte bulunamadı.</p>`+`<p><a target="_blank" rel="noopener" href="https://sozluk.gov.tr/?ara=${encodeURIComponent(w)}">TDK Güncel Türkçe Sözlük'te “${w}” kelimesini ara ↗</a></p>`}
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
